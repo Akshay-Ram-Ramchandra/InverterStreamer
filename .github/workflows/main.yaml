@@ -55,31 +55,28 @@ jobs:
           -t ghcr.io/${{ env.REPO_LOWER }}:${{ steps.extract_version.outputs.VERSION }} . \
           --push
 
-#  deploy:
-#    needs: build
-#    runs-on:
-#      ubuntu-latest
-#    steps:
-#      - name: Set Kubernetes context
-#        uses: azure/k8s-set-context@v2
-#        with:
-#          method: service-account
-#          k8s-url: https://54.212.5.23:6443
-#          k8s-secret: ${{ secrets.K8S_SECRET }}
-#
-#      - name: Checkout the repo
-#        uses: actions/checkout@v3
-#
-#      - name: replace IMAGE NAME in file
-#        id: replace_image_name
-#        run: |
-#          imageName=${{ needs.build.outputs.dockerTag }};
-#          imageName=${imageName,,}
-#          find . -name "producer.yaml" -type f -exec sed -i "s#__IMAGE_NAME__#$imageName#g" {} \;
-#
-#      - name: Deploy to the Kubernetes cluster
-#        run: |
-#          kubectl apply -f ./infra/zookeeper.yaml
-#          kubectl apply -f ./infra/kafka.yaml
-#          kubectl apply -f ./infra/initializer.yaml
-#          kubectl apply -f ./infra/producer.yaml
+  deploy:
+    needs: build
+    runs-on:
+      ubuntu-latest
+    steps:
+      - name: Set Kubernetes context
+        uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: https://54.212.5.23:6443
+          k8s-secret: ${{ secrets.K8S_SECRET }}
+
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: replace IMAGE NAME in file
+        id: replace_image_name
+        run: |
+          imageName=${{ needs.build.outputs.dockerTag }};
+          imageName=${imageName,,}
+          find . -name "inverter_streamer.yaml" -type f -exec sed -i "s#__IMAGE_NAME__#$imageName#g" {} \;
+
+      - name: Deploy to the Kubernetes cluster
+        run: |
+          kubectl apply -f ./inverter_streamer.yaml

@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inverter-streamer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inverter-streamer
+  template:
+    metadata:
+      labels:
+        app: inverter-streamer
+    spec:
+      containers:
+      - name: inverter-streamer-container
+        image: __IMAGE_NAME__
+        command: ["python", "main.py"]
