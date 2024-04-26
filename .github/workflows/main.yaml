@@ -1,0 +1,85 @@
+name: GitHub Actions CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  build:
+    name: Build image & push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      dockerTag: ghcr.io/${{ github.repository }}:${{ steps.extract_version.outputs.VERSION }}
+
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Extract version
+        id: extract_version
+        run: |
+          version=$(cat infra/version.txt)
+          echo "::set-output name=VERSION::$version"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: check login
+        run: echo "logged in " + ${{ github.repository_owner }}
+
+      - name: lowering case of repo
+        run: echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: lowering case of owner
+        run: echo "OWNER_LOWER=$(echo ${{ github.owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+
+      - name: Set up Docker Buildx
+        run: |
+          docker buildx create --use
+
+      - name: Build Docker image
+        run: |
+          docker buildx build \
+          --file ./docker/Dockerfile \
+          --platform linux/amd64,linux/arm64 \
+          -t ghcr.io/${{ env.REPO_LOWER }}:${{ steps.extract_version.outputs.VERSION }} . \
+          --push
+
+#  deploy:
+#    needs: build
+#    runs-on:
+#      ubuntu-latest
+#    steps:
+#      - name: Set Kubernetes context
+#        uses: azure/k8s-set-context@v2
+#        with:
+#          method: service-account
+#          k8s-url: https://54.212.5.23:6443
+#          k8s-secret: ${{ secrets.K8S_SECRET }}
+#
+#      - name: Checkout the repo
+#        uses: actions/checkout@v3
+#
+#      - name: replace IMAGE NAME in file
+#        id: replace_image_name
+#        run: |
+#          imageName=${{ needs.build.outputs.dockerTag }};
+#          imageName=${imageName,,}
+#          find . -name "producer.yaml" -type f -exec sed -i "s#__IMAGE_NAME__#$imageName#g" {} \;
+#
+#      - name: Deploy to the Kubernetes cluster
+#        run: |
+#          kubectl apply -f ./infra/zookeeper.yaml
+#          kubectl apply -f ./infra/kafka.yaml
+#          kubectl apply -f ./infra/initializer.yaml
+#          kubectl apply -f ./infra/producer.yaml
