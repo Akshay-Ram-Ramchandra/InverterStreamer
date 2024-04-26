@@ -11,9 +11,10 @@ logger = logging.getLogger(__name__)
 
 def produce_inverter_data(producer,
                           device_name,
+                          filename="494654",
                           production_interval=1):
     while True:
-        msg = get_inverter_data()
+        msg = get_inverter_data(file_name=filename)
         logger.info(f'Produced {msg}')
         produce_messages(producer=producer, topic=device_name, msg=msg)
         time.sleep(production_interval)

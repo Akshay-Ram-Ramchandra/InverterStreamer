@@ -15,21 +15,10 @@ logging.basicConfig(level=log_level,
 logger = logging.getLogger(__name__)
 
 
-hostip = os.getenv('HOSTNAME')
-if not hostip:
-    hostip = os.popen('hostname -I').read()
 
-hostip = hostip.strip().split(" ")[0]
+produce_to = config['PRODUCETO']
 
-device_name = config['DEVICENAME'][hostip]
-device_ip = config['DEVICEIP'][device_name]
-produce_to = config['PRODUCETO'][device_name].split(",")
-
-
-logger.info(f"Hi, I am {device_name}, my ip is {device_ip}")
-logger.info(f"Hi, I will produce to {produce_to}")
-
-
+print(produce_to)
 producer = create_producer(host=config['KAFKA']['host'],
                            port=config['KAFKA']['port'],
                            username=config['KAFKA']['username'],
@@ -40,6 +29,7 @@ for device_name in produce_to:
     t = threading.Thread(target=produce_inverter_data,
                          args=(producer,
                                device_name,
+                               produce_to[device_name],
                                int(config['PRODUCER']['interval'])))
     data_production_threads.append(t)
     t.start()
