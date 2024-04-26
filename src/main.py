@@ -28,7 +28,7 @@ for device_name in produce_to:
     logger.info(f"Starting production to: {device_name}")
     t = threading.Thread(target=produce_inverter_data,
                          args=(producer,
-                               device_name,
+                               f"inverter_{device_name}",
                                produce_to[device_name],
                                int(config['PRODUCER']['interval'])))
     data_production_threads.append(t)
