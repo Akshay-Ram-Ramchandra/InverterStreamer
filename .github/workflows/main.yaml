@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
 
 
 jobs:
@@ -56,9 +58,7 @@ jobs:
           --push
 
   deploy:
-    needs: build
-    runs-on:
-      ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Set Kubernetes context
         uses: azure/k8s-set-context@v2
@@ -79,4 +79,4 @@ jobs:
 
       - name: Deploy to the Kubernetes cluster
         run: |
-          kubectl apply -f ./inverter_streamer.yaml
+          kubectl apply -f ./infra/inverter_streamer.yaml
