@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 
 produce_to = PRODUCE_TO.split(",")
 
-print(produce_to)
+logger.info(f"The inverter Streamer will generate data for: {produce_to}")
+
+
 producer = create_producer(host=KAFKA_HOST,
                            port=KAFKA_PORT)
 data_production_threads = []
