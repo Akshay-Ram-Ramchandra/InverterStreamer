@@ -28,6 +28,10 @@ def create_producer(host, port, username=None, password=None):
     """
     conf = {
         'bootstrap.servers': host + ":" + port,
+        'acks': 'all',
+        'retries': 5,
+        'retry.backoff.ms': 500,
+        'enable.idempotence': True
     }
     # Add username and password if provided
     if username and password:
@@ -40,8 +44,8 @@ def create_producer(host, port, username=None, password=None):
 
     return producer
 
+
 def produce_messages(producer, topic, msg):
     producer.poll(0)
     producer.produce(topic, json.dumps(msg), callback=delivery_report)
     producer.flush()
-
