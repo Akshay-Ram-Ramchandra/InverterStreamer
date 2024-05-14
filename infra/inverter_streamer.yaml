@@ -16,3 +16,24 @@ spec:
       - name: inverter-streamer-container
         image: __IMAGE_NAME__
         command: ["python", "main.py"]
+        env:
+          - name: KAFKA_HOST
+            value: "kafka-cloud-service"
+          - name: KAFKA_PORT
+            value: "9092"
+          - name: PRODUCTION_INTERVAL
+            value: "1"
+          - name: PRODUCE_TO
+            value: "nano01,nano02,nano03,nano04,nano05,nano06"
+          - name: nano01
+            value: "494654"
+          - name: nano02
+            value: "494654"
+          - name: nano03
+            value: "494654"
+          - name: nano04
+            value: "494654"
+          - name: nano05
+            value: "494654"
+          - name: nano06
+            value: "494654"
