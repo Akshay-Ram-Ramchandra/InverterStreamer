@@ -1,11 +1,10 @@
 import os
 import pandas as pd
 import datetime
+from aws_s3.read_s3 import get_csv_for_stream
 
 
-def get_inverter_data(file_name="494654"):
-
-    df = pd.read_csv(os.path.join("dataset", f"{file_name}.csv"))
+def get_inverter_data(df):
     # print(df.columns)
     t = pd.to_datetime(datetime.datetime.now())
     d = t.dayofweek
@@ -50,5 +49,5 @@ def get_inverter_data(file_name="494654"):
 # df.to_csv("data/494654.csv")
 
 if __name__ == "__main__":
-    df = pd.read_csv("494654.csv")
+    df = pd.read_csv("dataset/494654.csv")
     get_inverter_data(df=df)

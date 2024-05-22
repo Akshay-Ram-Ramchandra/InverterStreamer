@@ -14,25 +14,40 @@ username = "myuser"
 password = "mysecretpassword"
 
 
-def create_consumer(host, port, group='my_consumer'):
+def create_consumer(host,
+                    port,
+                    group='my_consumer',
+                    username=None,
+                    password=None):
     conf = {
-        'bootstrap.servers': host + ':' + str(port),
-        'group.id': group,  # Consumer group ID
-        'auto.offset.reset': 'latest',
-        'security.protocol': 'SASL_PLAINTEXT',
-        'sasl.mechanism': 'PLAIN',
-        'sasl.username': username,
-        'sasl.password': password
+        'bootstrap.servers': f'{host}:{port}',
+        'group.id': group,
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': True  # Optionally manage commits manually
     }
-    consumer = Consumer(**conf)
-    return consumer
+    if username and password:
+        conf.update({
+            'security.protocol': 'SASL_PLAINTEXT',
+            'sasl.mechanism': 'PLAIN',
+            'sasl.username': username,
+            'sasl.password': password
+        })
+    try:
+        consumer = Consumer(conf)
+        print("Consumer created successfully!")
+        return consumer
+    except Exception as e:
+        print(f"Failed to create consumer: {str(e)}")
+        return None
 
 
-def consume_messages(consumer, topic, nmsgs=10):
+def consume_messages(consumer,
+                     topic):
     consumer.subscribe([topic])
     try:
-        msgs = consumer.consume(num_messages=nmsgs)
-        return [[msg.value().decode('utf-8') for msg in msgs], [msg.offset() for msg in msgs]]
+        # msgs = consumer.consume(timeout=1.5, num_messages=nmsgs)
+        msgs = consumer.poll(timeout=1.5)
+        return msgs
     except Exception as e:
         print("Error" + str(e))
         return "Error" + str(e)
