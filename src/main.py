@@ -2,10 +2,14 @@ import signal
 import threading
 import os
 import logging
+import time
+
 from dotenv import load_dotenv
 from aws_s3.read_s3 import get_csv_for_stream
 from kafka.consumer import create_consumer, consume_messages
 from kafka.producer import create_producer
+from data_production import produce_inverter_data
+
 
 load_dotenv()
 
@@ -42,6 +46,38 @@ consumer = create_consumer(host=KAFKA_HOST,
                            port=KAFKA_PORT,
                            group="inverter_streamer")
 
+current_stream_file = {
+    "nano01": "Awaiting Start",
+    "nano02": "Awaiting Start",
+    "nano03": "Awaiting Start",
+    "nano04": "Awaiting Start",
+    "nano05": "Awaiting Start",
+    "nano06": "Awaiting Start",
+
+}
+
+event_map = {
+    "nano01": threading.Event(),
+    "nano02": threading.Event(),
+    "nano03": threading.Event(),
+    "nano04": threading.Event(),
+    "nano05": threading.Event(),
+    "nano06": threading.Event(),
+
+}
+
+thread_map = {
+    "nano01": None,
+    "nano02": None,
+    "nano03": None,
+    "nano04": None,
+    "nano05": None,
+    "nano06": None,
+
+}
+
+
+
 while not stop_flag.is_set():
     nano01_stream_file = consume_messages(consumer, "nano01_stream_file")
     nano02_stream_file = consume_messages(consumer, "nano02_stream_file")
@@ -60,13 +96,60 @@ while not stop_flag.is_set():
 
         else:
             file_to_stream = nano01_stream_file.value().decode("utf-8")
+            currently_streaming = current_stream_file["nano01"]
+            logger.info(f"Nano01 is streaming: {currently_streaming}")
+            producer.produce(topic="nano01_stream_ack", value=f"Currently streaming: {currently_streaming}")
 
-            logger.info(f"Nano01: I will stream {file_to_stream}.")
-            logger.info(f"Nano01: Reading file: {file_to_stream}.")
-            df = get_csv_for_stream(file_to_stream)
-            logger.info(f"Nano01: {file_to_stream} Read.")
-            print(df.head())
-            logger.info(f"Nano01: Should the thread be started?")
+            if file_to_stream != currently_streaming:
+                logger.info(f"Nano01 will be switched to: {file_to_stream}")
+                producer.produce(topic="nano01_stream_ack", value=f"Will be switched to: {file_to_stream}")
+
+                logger.info(f"Nano01: Reading file: {file_to_stream}.")
+                producer.produce(topic="nano01_stream_ack", value=f"File Download started.")
+                df = get_csv_for_stream(file_to_stream)
+                producer.produce(topic="nano01_stream_ack", value=f"File Download Completed.")
+                logger.info(f"Nano01: {file_to_stream} Read.")
+                # Stop the old thread and start a new one, that as the new df as a parameter.
+                if not thread_map["nano01"]:
+                    logger.info("Starting Fresh stream..")
+                    t = threading.Thread(target=produce_inverter_data,
+                                         args=(producer,
+                                               "nano01",
+                                               df,
+                                               event_map["nano01"],
+                                               1),
+                                         name="nano01")
+                    thread_map["nano01"] = t
+                    thread_map["nano01"].start()
+
+                else:
+                    logger.info(f"Killing old producer...")
+                    event_map["nano01"].set()
+                    while thread_map["nano01"].is_alive():
+                        time.sleep(1)
+                        logger.info("Awaiting process completion...")
+                    # unsetting the event
+                    event_map["nano01"].clear()
+                    t = threading.Thread(target=produce_inverter_data,
+                                         args=(producer,
+                                               "nano01",
+                                               df,
+                                               event_map["nano01"],
+                                               1),
+                                         name="nano01")
+                    t.start()
+                    thread_map["nano01"] = t
+
+
+                    logger.info("New thread started")
+                current_stream_file["nano01"] = file_to_stream
+                producer.produce(topic="nano01_stream_ack", value=f"Commenced start: {file_to_stream}")
+
+
+            else:
+                logger.info(f"Nano01 will not be switched{file_to_stream} = {current_stream_file['nano01']}")
+
+
 
 
     # if nano02_stream_file:
@@ -138,6 +221,12 @@ while not stop_flag.is_set():
     stop_flag.wait(1) # Wait for 1 second before checking again to prevent tight loop
 
 logger.info("Cleaning up and exiting.")
+
+logger.info("Killing threads...")
+for event in event_map:
+    logger.info(f"Killing {event}...")
+    event_map[event].set()
+logger.info(f"All threads killed...")
 if consumer:
     logger.info("Closing consumer...")
 
@@ -165,11 +254,12 @@ logger.info("Exiting...")
 # data_production_threads = []
 # for device_name in produce_to:
 #     logger.info(f"Starting production to: {device_name}")
-#     t = threading.Thread(target=produce_inverter_data,
-#                          args=(producer,
-#                                f"input_{device_name}",
-#                                os.getenv(device_name),
-#                                int(PRODUCTION_INTERVAL)))
+# t = threading.Thread(target=produce_inverter_data,
+#                      args=(producer,
+#                            f"input_{device_name}",
+#                            os.getenv(device_name),
+#                            int(PRODUCTION_INTERVAL)),
+#                      name="nano01")
 #     data_production_threads.append(t)
 #     t.start()
 #
