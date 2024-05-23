@@ -49,3 +49,9 @@ def produce_messages(producer, topic, msg):
     producer.poll(0)
     producer.produce(topic, json.dumps(msg), callback=delivery_report)
     producer.flush()
+
+
+def produce_messages_str(producer, topic, msg):
+    producer.poll(0)
+    producer.produce(topic, msg, callback=delivery_report)
+    producer.flush()

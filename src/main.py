@@ -6,7 +6,7 @@ import time
 
 from dotenv import load_dotenv
 from kafka.consumer import create_consumer, consume_messages
-from kafka.producer import create_producer
+from kafka.producer import create_producer, produce_messages, produce_messages_str
 from thread_manager import manage_threads
 
 
@@ -93,6 +93,8 @@ while not stop_flag.is_set():
                        producer,
                        thread_map,
                        event_map)
+    else:
+        produce_messages_str(producer, "nano01_stream_ack", msg=str(current_stream_file['nano01']))
 
     if nano02_stream_file:
         manage_threads(nano02_stream_file,
@@ -101,6 +103,8 @@ while not stop_flag.is_set():
                        producer,
                        thread_map,
                        event_map)
+    else:
+        produce_messages_str(producer, "nano02_stream_ack", msg=current_stream_file['nano02'])
 
     if nano03_stream_file:
         manage_threads(nano03_stream_file,
@@ -109,14 +113,18 @@ while not stop_flag.is_set():
                        producer,
                        thread_map,
                        event_map)
+    else:
+        produce_messages_str(producer, "nano03_stream_ack", msg=current_stream_file['nano03'])
 
     if nano04_stream_file:
-        manage_threads(nano03_stream_file,
+        manage_threads(nano04_stream_file,
                        "nano04",
                        current_stream_file,
                        producer,
                        thread_map,
                        event_map)
+    else:
+        produce_messages_str(producer, "nano04_stream_ack", msg=current_stream_file['nano04'])
 
     if nano05_stream_file:
         manage_threads(nano05_stream_file,
@@ -125,6 +133,8 @@ while not stop_flag.is_set():
                        producer,
                        thread_map,
                        event_map)
+    else:
+        produce_messages_str(producer, "nano05_stream_ack", msg=current_stream_file['nano05'])
 
     if nano06_stream_file:
         manage_threads(nano06_stream_file,
@@ -133,9 +143,10 @@ while not stop_flag.is_set():
                        producer,
                        thread_map,
                        event_map)
-
+    else:
+        produce_messages_str(producer, "nano06_stream_ack", msg=current_stream_file['nano06'])
     logger.info(f"=============================================")
-    stop_flag.wait(1) # Wait for 1 second before checking again to prevent tight loop
+    stop_flag.wait(1)
 
 logger.info("Cleaning up and exiting.")
 
