@@ -5,10 +5,10 @@ import logging
 import time
 
 from dotenv import load_dotenv
-from aws_s3.read_s3 import get_csv_for_stream
 from kafka.consumer import create_consumer, consume_messages
 from kafka.producer import create_producer
-from data_production import produce_inverter_data
+from thread_manager import manage_threads
+
 
 
 load_dotenv()
@@ -87,135 +87,52 @@ while not stop_flag.is_set():
     nano06_stream_file = consume_messages(consumer, "nano06_stream_file")
 
     if nano01_stream_file:
-        if nano01_stream_file.error():
-            err = nano01_stream_file.value().decode("utf-8")
-            if err.split(":")[0] == "Subscribed topic not available":
-                logger.info(f"Nano01, Awaiting topic Creation")
-            else:
-                logger.error(f"Nano01: {err}")
+        manage_threads(nano01_stream_file,
+                       "nano01",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
-        else:
-            file_to_stream = nano01_stream_file.value().decode("utf-8")
-            currently_streaming = current_stream_file["nano01"]
-            logger.info(f"Nano01 is streaming: {currently_streaming}")
-            producer.produce(topic="nano01_stream_ack", value=f"Currently streaming: {currently_streaming}")
+    if nano02_stream_file:
+        manage_threads(nano02_stream_file,
+                       "nano02",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
-            if file_to_stream != currently_streaming:
-                logger.info(f"Nano01 will be switched to: {file_to_stream}")
-                producer.produce(topic="nano01_stream_ack", value=f"Will be switched to: {file_to_stream}")
+    if nano03_stream_file:
+        manage_threads(nano03_stream_file,
+                       "nano03",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
-                logger.info(f"Nano01: Reading file: {file_to_stream}.")
-                producer.produce(topic="nano01_stream_ack", value=f"File Download started.")
-                df = get_csv_for_stream(file_to_stream)
-                producer.produce(topic="nano01_stream_ack", value=f"File Download Completed.")
-                logger.info(f"Nano01: {file_to_stream} Read.")
-                # Stop the old thread and start a new one, that as the new df as a parameter.
-                if not thread_map["nano01"]:
-                    logger.info("Starting Fresh stream..")
-                    t = threading.Thread(target=produce_inverter_data,
-                                         args=(producer,
-                                               "nano01",
-                                               df,
-                                               event_map["nano01"],
-                                               1),
-                                         name="nano01")
-                    thread_map["nano01"] = t
-                    thread_map["nano01"].start()
+    if nano04_stream_file:
+        manage_threads(nano03_stream_file,
+                       "nano04",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
-                else:
-                    logger.info(f"Killing old producer...")
-                    event_map["nano01"].set()
-                    while thread_map["nano01"].is_alive():
-                        time.sleep(1)
-                        logger.info("Awaiting process completion...")
-                    # unsetting the event
-                    event_map["nano01"].clear()
-                    t = threading.Thread(target=produce_inverter_data,
-                                         args=(producer,
-                                               "nano01",
-                                               df,
-                                               event_map["nano01"],
-                                               1),
-                                         name="nano01")
-                    t.start()
-                    thread_map["nano01"] = t
+    if nano05_stream_file:
+        manage_threads(nano05_stream_file,
+                       "nano05",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
-
-                    logger.info("New thread started")
-                current_stream_file["nano01"] = file_to_stream
-                producer.produce(topic="nano01_stream_ack", value=f"Commenced start: {file_to_stream}")
-
-
-            else:
-                logger.info(f"Nano01 will not be switched{file_to_stream} = {current_stream_file['nano01']}")
-
-
-
-
-    # if nano02_stream_file:
-    #     if nano02_stream_file.error():
-    #         err = nano02_stream_file.value().decode("utf-8")
-    #         if err.split(":")[0] == "Subscribed topic not available":
-    #             logger.info(f"Nano02, Awaiting topic Creation")
-    #         else:
-    #             logger.error(f"Nano02: {err}")
-    #
-    #     else:
-    #         file_to_stream = nano02_stream_file.value().decode("utf-8")
-    #
-    #         logger.info(f"Nano02: I will stream {file_to_stream}.")
-    #
-    # if nano03_stream_file:
-    #     if nano03_stream_file.error():
-    #         err = nano03_stream_file.value().decode("utf-8")
-    #         if err.split(":")[0] == "Subscribed topic not available":
-    #             logger.info(f"Nano03, Awaiting topic Creation")
-    #         else:
-    #             logger.error(f"Nano03: {err}")
-    #
-    #     else:
-    #         file_to_stream = nano03_stream_file.value().decode("utf-8")
-    #
-    #         logger.info(f"Nano03: I will stream {file_to_stream}.")
-    #
-    # if nano04_stream_file:
-    #     if nano04_stream_file.error():
-    #         err = nano04_stream_file.value().decode("utf-8")
-    #         if err.split(":")[0] == "Subscribed topic not available":
-    #             logger.info(f"Nano04, Awaiting topic Creation")
-    #         else:
-    #             logger.error(f"Nano04: {err}")
-    #
-    #     else:
-    #         file_to_stream = nano04_stream_file.value().decode("utf-8")
-    #
-    #         logger.info(f"Nano04: I will stream {file_to_stream}.")
-    #
-    # if nano05_stream_file:
-    #     if nano05_stream_file.error():
-    #         err = nano05_stream_file.value().decode("utf-8")
-    #         if err.split(":")[0] == "Subscribed topic not available":
-    #             logger.info(f"Nano05, Awaiting topic Creation")
-    #         else:
-    #             logger.error(f"Nano05: {err}")
-    #
-    #     else:
-    #         file_to_stream = nano04_stream_file.value().decode("utf-8")
-    #
-    #         logger.info(f"Nano05: I will stream {file_to_stream}.")
-    #
-    # if nano06_stream_file:
-    #     if nano06_stream_file.error():
-    #         err = nano06_stream_file.value().decode("utf-8")
-    #         if err.split(":")[0] == "Subscribed topic not available":
-    #             logger.info(f"Nano06, Awaiting topic Creation")
-    #         else:
-    #             logger.error(f"Nano06: {err}")
-    #
-    #     else:
-    #         file_to_stream = nano04_stream_file.value().decode("utf-8")
-    #
-    #         logger.info(f"Nano06: I will stream {file_to_stream}.")
+    if nano06_stream_file:
+        manage_threads(nano06_stream_file,
+                       "nano06",
+                       current_stream_file,
+                       producer,
+                       thread_map,
+                       event_map)
 
     logger.info(f"=============================================")
     stop_flag.wait(1) # Wait for 1 second before checking again to prevent tight loop

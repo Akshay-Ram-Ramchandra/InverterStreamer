@@ -17,7 +17,7 @@ def produce_inverter_data(producer,
     print("Starting producer !")
     while not stop_event.is_set():
         msg = get_inverter_data(df)
-        logger.info(f'Produced {msg}')
+        logger.error(f'Produced {msg}')
         produce_messages(producer=producer,
                          topic=f"input_{device_name}",
                          msg=msg)
