@@ -13,7 +13,7 @@ spec:
         app: inverter-streamer
     spec:
       containers:
-      - name: inverter-streamer-container
+      - name: inverter-streamer
         image: __IMAGE_NAME__
         command: ["python", "main.py"]
         env:
