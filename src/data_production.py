@@ -17,11 +17,12 @@ def produce_inverter_data(producer,
     print("Starting producer !")
     while not stop_event.is_set():
         msg = get_inverter_data(df)
-        logger.error(f'Produced {msg}')
+        logger.debug(f'Produced: {msg}')
         produce_messages(producer=producer,
                          topic=f"input_{device_name}",
                          msg=msg)
         time.sleep(production_interval)
     logger.info("Kill signal received, flushing producer....")
     producer.flush()
+
     logger.info("Producer flushed.. Exiting...")

@@ -10,7 +10,6 @@ from kafka.producer import create_producer, produce_messages, produce_messages_s
 from thread_manager import manage_threads
 
 
-
 load_dotenv()
 
 KAFKA_HOST = os.getenv("KAFKA_HOST")
