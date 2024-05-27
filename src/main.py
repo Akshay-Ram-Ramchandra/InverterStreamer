@@ -9,7 +9,6 @@ from kafka.consumer import create_consumer, consume_messages
 from kafka.producer import create_producer, produce_messages, produce_messages_str
 from thread_manager import manage_threads
 
-
 load_dotenv()
 
 KAFKA_HOST = os.getenv("KAFKA_HOST")
@@ -37,17 +36,16 @@ produce_to = PRODUCE_TO.split(",")
 
 logger.info(f"The inverter Streamer will generate data for: {produce_to}")
 
-
 producer = create_producer(host=KAFKA_HOST,
                            port=KAFKA_PORT)
 
 topics = [
-"nano01_stream_file",
-"nano02_stream_file",
-"nano03_stream_file",
-"nano04_stream_file",
-"nano05_stream_file",
-"nano06_stream_file",
+    "nano01_stream_file",
+    "nano02_stream_file",
+    "nano03_stream_file",
+    "nano04_stream_file",
+    "nano05_stream_file",
+    "nano06_stream_file",
 ]
 
 consumer = create_consumer(host=KAFKA_HOST,
@@ -85,15 +83,13 @@ thread_map = {
 
 }
 
-
-
 while not stop_flag.is_set():
-    nano01_stream_file = consume_messages(consumer)
-    nano02_stream_file = consume_messages(consumer)
-    nano03_stream_file = consume_messages(consumer)
-    nano04_stream_file = consume_messages(consumer)
-    nano05_stream_file = consume_messages(consumer)
-    nano06_stream_file = consume_messages(consumer)
+    nano01_stream_file = consume_messages(consumer, timeout=1)
+    nano02_stream_file = consume_messages(consumer, timeout=1)
+    nano03_stream_file = consume_messages(consumer, timeout=1)
+    nano04_stream_file = consume_messages(consumer, timeout=1)
+    nano05_stream_file = consume_messages(consumer, timeout=1)
+    nano06_stream_file = consume_messages(consumer, timeout=1)
 
     if nano01_stream_file:
         manage_threads(nano01_stream_file,
@@ -154,7 +150,7 @@ while not stop_flag.is_set():
                        event_map)
     else:
         produce_messages_str(producer, "nano06_stream_ack", msg=current_stream_file['nano06'])
-    time.sleep(1)
+    # time.sleep(1)
     logger.info(f"=============================================")
     stop_flag.wait(1)
 
@@ -184,10 +180,6 @@ if producer:
     except Exception as e:
         logger.error(f"Error flushing producer: {e}")
 logger.info("Exiting...")
-
-
-
-
 
 # data_production_threads = []
 # for device_name in produce_to:
