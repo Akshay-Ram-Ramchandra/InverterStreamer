@@ -3,10 +3,10 @@ import threading
 import os
 import logging
 import time
-
 from dotenv import load_dotenv
 from kafka.consumer import create_consumer, consume_messages
 from kafka.producer import create_producer, produce_messages, produce_messages_str
+from kafka.kafka_admin import create_topic
 from thread_manager import manage_threads
 
 load_dotenv()
@@ -47,6 +47,10 @@ topics = [
     "nano05_stream_file",
     "nano06_stream_file",
 ]
+logger.info(f"Starting topic creation: {topics}")
+for topic in topics:
+    logger.info(f"Creating topic: {topics}")
+    create_topic(kafka_host=KAFKA_HOST, kafka_port=KAFKA_PORT, topic_name=topic)
 
 consumer = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=topics, group="stream_file_inverter_Streamer")
 
