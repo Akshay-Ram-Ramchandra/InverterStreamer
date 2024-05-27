@@ -47,3 +47,7 @@ spec:
               secretKeyRef:
                 name: aws-credentials
                 key: aws_secret_access_key
+      imagePullSecrets:
+        - name: ghcr-creds
+      nodeSelector:
+        kubernetes.io/hostname: c2srhpc
