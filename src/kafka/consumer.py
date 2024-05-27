@@ -23,7 +23,7 @@ topics,
     conf = {
         'bootstrap.servers': f'{host}:{port}',
         'group.id': group,
-        'auto.offset.reset': 'earliest',
+        'auto.offset.reset': 'latest',
         'enable.auto.commit': True,
         'group.instance.id': f'unique-{group}-instance'
     }
