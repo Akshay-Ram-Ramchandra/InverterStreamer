@@ -39,13 +39,16 @@ logger.info(f"The inverter Streamer will generate data for: {produce_to}")
 producer = create_producer(host=KAFKA_HOST,
                            port=KAFKA_PORT)
 
+topics = [
+    "nano01_stream_file",
+    "nano02_stream_file",
+    "nano03_stream_file",
+    "nano04_stream_file",
+    "nano05_stream_file",
+    "nano06_stream_file",
+]
 
-consumer_nano01 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_01_stream_file"], group="nano_01_inverter_streamer")
-consumer_nano02 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_02_stream_file"], group="nano_02_inverter_streamer")
-consumer_nano03 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_03_stream_file"], group="nano_03_inverter_streamer")
-consumer_nano04 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_04_stream_file"], group="nano_04_inverter_streamer")
-consumer_nano05 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_05_stream_file"], group="nano_05_inverter_streamer")
-consumer_nano06 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_06_stream_file"], group="nano_06_inverter_streamer")
+consumer = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=topics, group="stream_file_inverter_Streamer")
 
 current_stream_file = {
     "nano01": "Awaiting Start",
@@ -78,72 +81,80 @@ thread_map = {
 }
 
 while not stop_flag.is_set():
-    nano01_stream_file = consume_messages(consumer_nano01, timeout=1)
-    nano02_stream_file = consume_messages(consumer_nano02, timeout=1)
-    nano03_stream_file = consume_messages(consumer_nano03, timeout=1)
-    nano04_stream_file = consume_messages(consumer_nano04, timeout=1)
-    nano05_stream_file = consume_messages(consumer_nano05, timeout=1)
-    nano06_stream_file = consume_messages(consumer_nano06, timeout=1)
+    stream_file = consume_messages(consumer, timeout=1)
+    if stream_file:
+        if stream_file.error():
+            pass
+        else:
+            consumed_from = stream_file.topic()
+            to_update_device = consumed_from.split("_")[0]
+            logger.info(f"Received update: {to_update_device}: {stream_file.value().decode('utf-8')}")
+            manage_threads(stream_file,
+                           to_update_device,
+                           current_stream_file,
+                           producer,
+                           thread_map,
+                           event_map)
 
-    if nano01_stream_file:
-        manage_threads(nano01_stream_file,
-                       "nano01",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano01_stream_ack", msg=str(current_stream_file['nano01']))
-
-    if nano02_stream_file:
-        manage_threads(nano02_stream_file,
-                       "nano02",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano02_stream_ack", msg=current_stream_file['nano02'])
-
-    if nano03_stream_file:
-        manage_threads(nano03_stream_file,
-                       "nano03",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano03_stream_ack", msg=current_stream_file['nano03'])
-
-    if nano04_stream_file:
-        manage_threads(nano04_stream_file,
-                       "nano04",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano04_stream_ack", msg=current_stream_file['nano04'])
-
-    if nano05_stream_file:
-        manage_threads(nano05_stream_file,
-                       "nano05",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano05_stream_ack", msg=current_stream_file['nano05'])
-
-    if nano06_stream_file:
-        manage_threads(nano06_stream_file,
-                       "nano06",
-                       current_stream_file,
-                       producer,
-                       thread_map,
-                       event_map)
-    else:
-        produce_messages_str(producer, "nano06_stream_ack", msg=current_stream_file['nano06'])
+    # if nano01_stream_file:
+    #     manage_threads(nano01_stream_file,
+    #                    "nano01",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano01_stream_ack", msg=str(current_stream_file['nano01']))
+    #
+    # if nano02_stream_file:
+    #     manage_threads(nano02_stream_file,
+    #                    "nano02",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano02_stream_ack", msg=current_stream_file['nano02'])
+    #
+    # if nano03_stream_file:
+    #     manage_threads(nano03_stream_file,
+    #                    "nano03",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano03_stream_ack", msg=current_stream_file['nano03'])
+    #
+    # if nano04_stream_file:
+    #     manage_threads(nano04_stream_file,
+    #                    "nano04",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano04_stream_ack", msg=current_stream_file['nano04'])
+    #
+    # if nano05_stream_file:
+    #     manage_threads(nano05_stream_file,
+    #                    "nano05",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano05_stream_ack", msg=current_stream_file['nano05'])
+    #
+    # if nano06_stream_file:
+    #     manage_threads(nano06_stream_file,
+    #                    "nano06",
+    #                    current_stream_file,
+    #                    producer,
+    #                    thread_map,
+    #                    event_map)
+    # else:
+    #     produce_messages_str(producer, "nano06_stream_ack", msg=current_stream_file['nano06'])
     # time.sleep(1)
     logger.info(f"=============================================")
     stop_flag.wait(1)
