@@ -39,19 +39,13 @@ logger.info(f"The inverter Streamer will generate data for: {produce_to}")
 producer = create_producer(host=KAFKA_HOST,
                            port=KAFKA_PORT)
 
-topics = [
-    "nano01_stream_file",
-    "nano02_stream_file",
-    "nano03_stream_file",
-    "nano04_stream_file",
-    "nano05_stream_file",
-    "nano06_stream_file",
-]
 
-consumer = create_consumer(host=KAFKA_HOST,
-                           port=KAFKA_PORT,
-                           topics=topics,
-                           group="inverter_streamer")
+consumer_nano01 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_01_stream_file"], group="nano_01_inverter_streamer")
+consumer_nano02 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_02_stream_file"], group="nano_02_inverter_streamer")
+consumer_nano03 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_03_stream_file"], group="nano_03_inverter_streamer")
+consumer_nano04 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_04_stream_file"], group="nano_04_inverter_streamer")
+consumer_nano05 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_05_stream_file"], group="nano_05_inverter_streamer")
+consumer_nano06 = create_consumer(host=KAFKA_HOST, port=KAFKA_PORT, topics=["nano_06_stream_file"], group="nano_06_inverter_streamer")
 
 current_stream_file = {
     "nano01": "Awaiting Start",
@@ -84,12 +78,12 @@ thread_map = {
 }
 
 while not stop_flag.is_set():
-    nano01_stream_file = consume_messages(consumer, timeout=1)
-    nano02_stream_file = consume_messages(consumer, timeout=1)
-    nano03_stream_file = consume_messages(consumer, timeout=1)
-    nano04_stream_file = consume_messages(consumer, timeout=1)
-    nano05_stream_file = consume_messages(consumer, timeout=1)
-    nano06_stream_file = consume_messages(consumer, timeout=1)
+    nano01_stream_file = consume_messages(consumer_nano01, timeout=1)
+    nano02_stream_file = consume_messages(consumer_nano02, timeout=1)
+    nano03_stream_file = consume_messages(consumer_nano03, timeout=1)
+    nano04_stream_file = consume_messages(consumer_nano04, timeout=1)
+    nano05_stream_file = consume_messages(consumer_nano05, timeout=1)
+    nano06_stream_file = consume_messages(consumer_nano06, timeout=1)
 
     if nano01_stream_file:
         manage_threads(nano01_stream_file,
