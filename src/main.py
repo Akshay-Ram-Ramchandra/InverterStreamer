@@ -88,12 +88,12 @@ thread_map = {
 
 
 while not stop_flag.is_set():
-    nano01_stream_file = consume_messages(consumer, )
-    nano02_stream_file = consume_messages(consumer, "nano02_stream_file")
-    nano03_stream_file = consume_messages(consumer, "nano03_stream_file")
-    nano04_stream_file = consume_messages(consumer, "nano04_stream_file")
-    nano05_stream_file = consume_messages(consumer, "nano05_stream_file")
-    nano06_stream_file = consume_messages(consumer, "nano06_stream_file")
+    nano01_stream_file = consume_messages(consumer)
+    nano02_stream_file = consume_messages(consumer)
+    nano03_stream_file = consume_messages(consumer)
+    nano04_stream_file = consume_messages(consumer)
+    nano05_stream_file = consume_messages(consumer)
+    nano06_stream_file = consume_messages(consumer)
 
     if nano01_stream_file:
         manage_threads(nano01_stream_file,
