@@ -16,6 +16,7 @@ password = "mysecretpassword"
 
 def create_consumer(host,
                     port,
+topics,
                     group='my_consumer',
                     username=None,
                     password=None):
@@ -23,7 +24,8 @@ def create_consumer(host,
         'bootstrap.servers': f'{host}:{port}',
         'group.id': group,
         'auto.offset.reset': 'earliest',
-        'enable.auto.commit': True  # Optionally manage commits manually
+        'enable.auto.commit': True,
+        'group.instance.id': f'unique-{group}-instance'
     }
     if username and password:
         conf.update({
@@ -35,18 +37,19 @@ def create_consumer(host,
     try:
         consumer = Consumer(conf)
         print("Consumer created successfully!")
+        consumer.subscribe(topics)
+        print("Consumer created successfully!")
         return consumer
     except Exception as e:
         print(f"Failed to create consumer: {str(e)}")
         return None
 
 
-def consume_messages(consumer,
-                     topic):
-    consumer.subscribe([topic])
+def consume_messages(consumer, timeout=1.5):
+
     try:
         # msgs = consumer.consume(timeout=1.5, num_messages=nmsgs)
-        msgs = consumer.poll(timeout=1.5)
+        msgs = consumer.poll(timeout=timeout)
         return msgs
     except Exception as e:
         print("Error" + str(e))

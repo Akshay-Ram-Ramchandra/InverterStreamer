@@ -17,7 +17,7 @@ KAFKA_PORT = os.getenv("KAFKA_PORT")
 PRODUCE_TO = os.getenv("PRODUCE_TO")
 PRODUCTION_INTERVAL = os.getenv("PRODUCTION_INTERVAL")
 
-log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+log_level = os.getenv('LOG_LEVEL', 'DEBUG').upper()
 logging.basicConfig(level=log_level,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -41,8 +41,18 @@ logger.info(f"The inverter Streamer will generate data for: {produce_to}")
 producer = create_producer(host=KAFKA_HOST,
                            port=KAFKA_PORT)
 
+topics = [
+"nano01_stream_file",
+"nano02_stream_file",
+"nano03_stream_file",
+"nano04_stream_file",
+"nano05_stream_file",
+"nano06_stream_file",
+]
+
 consumer = create_consumer(host=KAFKA_HOST,
                            port=KAFKA_PORT,
+                           topics=topics,
                            group="inverter_streamer")
 
 current_stream_file = {
@@ -78,7 +88,7 @@ thread_map = {
 
 
 while not stop_flag.is_set():
-    nano01_stream_file = consume_messages(consumer, "nano01_stream_file")
+    nano01_stream_file = consume_messages(consumer, )
     nano02_stream_file = consume_messages(consumer, "nano02_stream_file")
     nano03_stream_file = consume_messages(consumer, "nano03_stream_file")
     nano04_stream_file = consume_messages(consumer, "nano04_stream_file")
@@ -144,6 +154,7 @@ while not stop_flag.is_set():
                        event_map)
     else:
         produce_messages_str(producer, "nano06_stream_ack", msg=current_stream_file['nano06'])
+    time.sleep(1)
     logger.info(f"=============================================")
     stop_flag.wait(1)
 
