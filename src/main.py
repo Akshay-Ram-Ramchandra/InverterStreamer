@@ -46,6 +46,7 @@ topics = [
     "nano04_stream_file",
     "nano05_stream_file",
     "nano06_stream_file",
+    "redteam1_stream_file",
 ]
 logger.info(f"Starting topic creation: {topics}")
 for topic in topics:
@@ -61,6 +62,7 @@ current_stream_file = {
     "nano04": "Awaiting Start",
     "nano05": "Awaiting Start",
     "nano06": "Awaiting Start",
+    "redteam1": "Awaiting Start",
 
 }
 
@@ -71,6 +73,7 @@ event_map = {
     "nano04": threading.Event(),
     "nano05": threading.Event(),
     "nano06": threading.Event(),
+    "redteam1": threading.Event(),
 
 }
 
@@ -81,6 +84,7 @@ thread_map = {
     "nano04": None,
     "nano05": None,
     "nano06": None,
+    "redteam1": None,
 
 }
 
